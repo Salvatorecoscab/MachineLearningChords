@@ -1,6 +1,4 @@
 # MachineLearningChords
-<<<<<<< HEAD
-<<<<<<< HEAD
 
 <a name="readme-top"></a>
 
