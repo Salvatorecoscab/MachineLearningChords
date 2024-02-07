@@ -3,9 +3,7 @@
   <summary>Table of Contents</summary>
   <ol>
     <li><a href="#Introduction">Introduction</a></li>
-    <li><a href="#get-the-data">Get the data</a></li>
-    <li><a href="#annotate-the-data">Annotate the data</a></li>
-    <li><a href="#trying-multiple-yolo-models">Trying multiple YOLO models</a></li>
+    
     <li><a href="#Conclusion">Conclusion</a></li>
   </ol>
 </details>
@@ -14,44 +12,183 @@
 
 
 ## Introduction
-In this part I will explain how the process of training was done and the decisions that I made during the development of the model. I will explain how I gathered the data and I annotated it.
-I will also explain the reasons why I chose to use YOLOv8 and the reasons why I chose to use Roboflow to annotate the data.
+In this part I will explain the code of the application in general. 
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-## Get the data
-The data was taken from multiple videos in which I played the chords with various lighting conditions using a lamp and also two guitars to have a better variety of images. The videos were then converted into images using a python [script](miscellaneous/GetImages.py) that I made. This script uses the openCV library to extract each 10 frames from the video and saves them in a folder.
-As there were too many images I used another script to delete random images from the dataset to have a more balanced dataset. This script can be found [here](miscellaneous/DeleteRandomImages.py).
-After having all done, I uploaded the images to Roboflow to annotate them.
+
+## Development
+The first part of the code is the imports of the dependencies to be used
+  
+  ```python
+  import random
+  import cv2
+  import numpy as np
+  from ultralytics import YOLO
+  import threading
+  import os
+  import argparse
+  import time
+  ```
+
+The next part was defining some global variables:
+  
+  ```python
+  detect_params = None
+  DP = None
+  frame = None
+  done = True
+  newClass = None
+  ```
+
+As I used a model that takes a long time to predict I used functions and a thread to make the predictions in the background and make the camera smoother. The following is the function that loads the model:
+  
+  ```python
+  def predict_on_image(model, frame):
+    global detect_params
+    global DP
+    global done
+    # Predict on image
+    detect_params = model.predict(source=[frame], conf=0.45, save=False)
+    # Convert tensor array to numpy
+    DP = detect_params[0].numpy()
+    done = True
+  ```
+
+The second part of the code is the function that detects the chords in the video and overlays the image of the chord predicted. This image is contained in a folder called "ChordImages"
+
+  ```python
+ def detect_chords(source):
+    # acordes
+    global detect_params
+    global frame
+    global done
+    global newClass
+
+    class_list = ['A', 'Am', 'B7', 'Bm', 'C', 'D', 'D7','Dm', 'Em', 'F', 'G']
+    images_list = ['A.png', 'Am.png', 'B7.png', 'Bm.png', 'C.png', 'D.png', 'D7.png','Dm.png', 'Em.png', 'F.png', 'G.png']
+    path = os.getcwd()
+    imagesDir = os.path.join(path, "ChordImages")
+    images_list = [os.path.join(imagesDir, im) for im in images_list]
+    # Generate random colors for class list
+    detection_colors = []
+    for i in range(len(class_list)):
+        r = random.randint(0, 255)
+        g = random.randint(0, 255)
+        b = random.randint(0, 255)
+        detection_colors.append((b, g, r))
+
+    # load a pretrained YOLOv8n model
+    model = YOLO("models/detect.pt", "v8")
+
+    # Vals to resize video frames | small frame optimise the run
+    frame_wid = 640
+    frame_hyt = 640
+
+    # open the webcam
+    cap = cv2.VideoCapture(source)
+    # cap = cv2.VideoCapture("/Users/salvatorecoscab/Downloads/IMG_0043.MOV")
+
+    if not cap.isOpened():
+        print("Cannot open camera")
+        exit()
+
+    while True:
+        # Capture frame-by-frame
+        ret, frame = cap.read()
+        # flip the frame
+        # frame = cv2.flip(frame, 1)
+
+        if not ret:
+            print("Can't receive frame (stream end?). Exiting ...")
+            break
+
+        if done:
+            thread = threading.Thread(target=predict_on_image, args=(model,frame,))
+            thread.start()
+            done=False
+        try:
+            # detect one box
+            boxes= detect_params[0].boxes
+            box = boxes[0]
+            clsID = box.cls.numpy()[0]
+            conf = box.conf.numpy()[0]
+            bb = box.xyxy.numpy()[0]
+
+            cv2.rectangle(
+                frame,
+                (int(bb[0]), int(bb[1])),
+                (int(bb[2]), int(bb[3])),
+                detection_colors[int(clsID)],
+                3,
+            )
+            # Display class name and confidence
+            font = cv2.FONT_HERSHEY_COMPLEX
+            cv2.putText(
+                    frame,
+                    class_list[int(clsID)],
+                    (int(bb[0]), int(bb[1]) - 10),
+                    font,
+                    1,
+                    (255, 255, 255),
+                    2,
+                )
+            newClass = clsID
+            
+        except:
+            pass
+        if newClass is not None:
+            # Load the image to overlay
+            overlay_image = cv2.imread(images_list[int(newClass)])
+            # Resize overlay image to desired size
+            resized_overlay = cv2.resize(overlay_image, (250, 500))
+
+            # Get the dimensions of the resized overlay
+            overlay_height, overlay_width, _ = resized_overlay.shape
+
+            # Define the position for top right placement
+            top_right_x = frame.shape[1] - overlay_width
+            top_right_y = 0
+            # combined_frame=cv2.flip(combined_frame,1)
+            # Overlay the resized image onto the frame at the defined position
+            combined_frame = frame.copy()
+            combined_frame[top_right_y:top_right_y + overlay_height, top_right_x:top_right_x + overlay_width] = resized_overlay
+        else:
+            combined_frame = frame.copy()
+
+        # Display the resulting frame
+        
+        cv2.imshow("ObjectDetection", combined_frame)
+        
+        # Terminate run when "Q" pressed
+        if cv2.waitKey(1) == ord("q"):
+            break
+
+    # When everything done, release the capture
+    cap.release()
+    cv2.destroyAllWindows()
+  ```
+After that I just call the function to detect the chords in the video or webcam and the application is ready to use. 
+```python
+  if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Chord Detection')
+    parser.add_argument('--source', type=str, default='webcam',
+                        help='Path to the video or image file. If not provided, it uses webcam.')
+    args = parser.parse_args()
+
+    if args.source == 'webcam':
+        detect_chords(0)
+    else:
+        detect_chords(args.source)
+
+```
+I used argparse to be able to use the webcam or a video as a source for the application and this can be done by passing the path to the video or image as an argument to the application or leaving it blank to use the webcam.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-## Annotate the data
-I used Roboflow to annotate the data. At the begining I did a model with the annotations trying to give a instance segmentation approach and annotating just 70 images per class. This was not very good, because though the model performed okay, it was not very good. So I decided to increase the amount of images per class to 100 and use object detection instead. This was surprisingly better, so I stuck with this approach, and after trying multiple models I decided to use YOLOv8x and also a version with a smaller model, YOLOv8l. Since it was not much difference between the two models. 
-I am sure that if I had more images per class, the model would have performed better, but I did not have the time to do so.
-The first annotations, using the segmentation approach looked like this:
-![Segmentation](ProjectImages/segmentation.png)
-The second annotations, using the detection approach looked like this:
-![Detection](ProjectImages/detection.png)
-### Augmentation
-I also used Roboflow to augment the data, and I used the following augmentations:
-* Outputs per training example: 3
-* Flip: Horizontal, Vertical
-* Rotation: Between -10° and +10°
-* Grayscale: Apply to 15% of images
-* Hue: Between -20° and +20°
-* Exposure: Between -10% and +10%
-* Noise: Up to 0.5% of pixels
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-## Trying multiple YOLO models
-As I said before, I tryed multiple YOLOv8 models, sucha as yolov8n-seg, yolov8x-seg, yolov8m-seg, for the segmentation and yolov8x, yolov8l, yolov8m for the detection. As I deceided to use the detection approach I used the yolov8l and yolov8x models. The model that is contained in the repository is the yolov8l model, because it is smaller and it is easier to use. The yolov8x model is too big to be uploaded to github, but you can download. The link is in the README.md file.
-All the training was done based on the video tutorial listed in the README.md file, related with sign language detection.
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ## Conclusion
-Though the application is not perfect, it performs well. It is able to detect the chords, but sometimes you have to move a little bit the guitar to make it detect the chord. I am sure, as I proved when I increased the amount of images per class, that if I had more images per class, the model would have performed a lot better.
-This can be used as a base for a more complex application, such as a guitar teacher.
+The application is very robust and it was also used to test all the trained models. It can be optimized and improved in many ways, but it is a good start for a chord detection application.
+
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
