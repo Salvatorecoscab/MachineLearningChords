@@ -47,7 +47,7 @@ If you want to see the images that I used to train the model, you can find them 
 
 If you want to see the explanation of the code for the application or how I trained the model, you can find it in the following links:
 * [Code for aplication](CODE.md)
-* [Code for training the model](TRAIN.md)
+* [Training the model](TRAIN.md)
 
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
