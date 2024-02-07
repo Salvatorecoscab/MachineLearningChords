@@ -37,7 +37,7 @@
 
 [![Product Name Screen Shot][product-screenshot]](https://example.com)
 
-When a person starts learning how to play guitar, they ofteh start learning some chords. That is why I decided to create a machine lerning model that from a video, an image or just using the webcam, it can recognize the chords that are being played. 
+When a person starts learning how to play guitar, they often start learning some chords. That is why I decided to create a machine lerning model that from a video, an image or just using the webcam, it can recognize the chords that are being played. 
 I have already trained the model with 11 different chords, and I am planning to add more chords in the future. The chords that the model can recognize are: A, Am, Bm, B7, C, D, D7, Dm, Em, F, and G.
 This chord detection application might be useful in the future to develop more complex applications, such as a guitar teacher.
 This is a project that I am doing for my Machine Learning lecture at Hof University of Applied Sciences.
