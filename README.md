@@ -90,7 +90,7 @@ git clone
 pip install opencv-python
 pip install ultralytics
 ```
-
+once the dependencies are installed, you just have to download one of the models from the links above and put it in the same folder as the ChordDetection.py file.
 
 <!-- USAGE EXAMPLES -->
 ## Usage
