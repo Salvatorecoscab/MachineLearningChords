@@ -1,5 +1,6 @@
 # MachineLearningChords
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 <a name="readme-top"></a>
 
@@ -167,5 +168,7 @@ Project Link: [https://github.com/Salvatorecoscab/MachineLearningChords](https:/
 [YOLOv8.com]: https://img.shields.io/badge/YOLOv8-4A4A55?style=for-the-badge&logo=yolov8&logoColor=FF3E00
 <!-- ultralytics -->
 [YOLOv8-url]: https://github.com/ultralytics/ultralytics?tab=readme-ov-file
+=======
+>>>>>>> origin/main
 =======
 >>>>>>> origin/main
