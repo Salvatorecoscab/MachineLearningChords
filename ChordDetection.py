@@ -42,7 +42,7 @@ def detect_chords(source):
         detection_colors.append((b, g, r))
 
     # load a pretrained YOLOv8n model
-    model = YOLO("detect.pt", "v8")
+    model = YOLO("models/detect.pt", "v8")
 
     # Vals to resize video frames | small frame optimise the run
     frame_wid = 640
