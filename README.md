@@ -46,7 +46,7 @@ If you want to see the images that I used to train the model, you can find them 
 * [dataset without augmentation](https://drive.google.com/drive/folders/1bDZHMe4fbbrXj0HvlKFn1YTyW3PKdSHg?usp=drive_link)
 
 If you want to see the explanation of the code for the application or how I trained the model, you can find it in the following links:
-* [Code for aplication](CODE.md)
+* [Code for the application](CODE.md)
 * [Training the model](TRAIN.md)
 
 
