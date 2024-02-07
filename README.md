@@ -81,6 +81,8 @@ If you want use one of the two models that I have already trained for the applic
     * [Version 1](https://drive.google.com/file/d/1UH5IGShcNTGRWJmEr_HkUWbeh4Hg4eXh/view?usp=drive_link)
     * [Version 2](https://drive.google.com/file/d/1dkf01HCFlMJX_NJqrYd8zBbyCNi5ZZN8/view?usp=drive_link)
 
+* Change the name of the model to "best.pt" in "ChordDetection.py" and put the model in the models folder.
+
 
 ### Installation
 
